@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="club.canghao.card.dao.hotDao">
+	<!-- 目的：为dao接口方法提供sql语句配置 -->
+	<insert id="addHot" parameterType="hot" useGeneratedKeys="true" keyProperty="hotId">
+	    insert into hot(hotId,stuNumber,avatarUrl,nickName,hotContent,hotTime) values(#{hotId},#{stuNumber},#{avatarUrl},#{nickName},#{hotContent},#{hotTime});
+	</insert>
+	<insert id="addHot_img" parameterType="hot" useGeneratedKeys="true" keyProperty="id">
+	    insert into hot_img(id,hotId,imgUrl) values
+	    	<foreach collection="hot_img.imgUrl" item="item" index="index" separator="," close=";">
+	    	    (default,#{hotId},#{item})
+	    	</foreach>
+	</insert>
+	<select id="getAllHots" resultMap="hot_map">
+	    select 
+			hot.hotId,
+			hot.stuNumber as releaseStuNumber,
+			hot.avatarUrl as releaseAvatarUrl,
+			hot.nickName  as releaseNickName,
+			hot.hotContent,
+			hot.hotTime,
+			img.id as imgId,
+			img.hotId as imgHotId,
+			img.imgUrl,
+			review.id as reviewId,
+			review.stuNumber as reviewStuNumber,
+			review.avatarUrl as reviewAvatarUrl,
+			review.nickName  as reviewNickName,
+			review.reviewContent,
+			review.reviewTime,
+			hotlike.stuNumber as likeStuNumber,
+			hotlike.avatarUrl as likeAvatarUrl,
+			hotlike.nickName  as likeNickName
+		from 
+			(select * from hot 
+				where 1=1
+				<if test="releaseStuNumber != '' and releaseStuNumber != null">
+		            and hot.stuNumber = #{releaseStuNumber}
+		        </if> 
+        		order by hotId desc 
+        		limit #{start},#{size}) hot 
+        		left join hot_review review on hot.hotId=review.hotId
+				left join hot_like hotlike on hot.hotId=hotlike.hotId
+				left join hot_img img on hot.hotId=img.hotId
+	</select>
+	<resultMap id="hot_map" type="hot_view">
+         <id property="hotId" column="hotId"/>
+         <result property="stuNumber" column="releaseStuNumber"/>
+         <result property="nickName" column="releaseNickName"/>
+         <result property="avatarUrl" column="releaseAvatarUrl"/>
+         <result property="hotContent" column="hotContent"/>	         
+         <result property="hotTime" column="hotTime"/>
+         <collection property="imgs" ofType="java.util.HashMap" javaType="java.util.List">
+             <result property="value" column="imgUrl"/>
+         </collection>
+         <collection property="reviews" ofType="hot_review" javaType="java.util.List">
+             <id property="id" column="reviewId"/>
+             <result property="stuNumber" column="reviewStuNumber"/>
+             <result property="nickName" column="reviewNickName"/>
+             <result property="avatarUrl" column="reviewAvatarUrl"/>
+             <result property="reviewContent" column="reviewContent"/>	         
+             <result property="reviewTime" column="reviewTime"/>
+        </collection>
+        <collection property="likes" ofType="hot_like" javaType="java.util.List">
+             <result property="stuNumber" column="likeStuNumber"/>
+             <result property="nickName" column="likeNickName"/>
+             <result property="avatarUrl" column="likeAvatarUrl"/>
+        </collection>
+	</resultMap>
+	<resultMap id="hot_imgs" type="hot_img">
+	    <id property="id" column="imgId"/>
+	    <result property="hotId" column="imgHotId"></result>
+		<collection property="imgUrl" ofType="java.lang.String">         
+        	<result property="hotId" column="imgHotId"></result>
+        </collection>  
+	</resultMap>
+</mapper>

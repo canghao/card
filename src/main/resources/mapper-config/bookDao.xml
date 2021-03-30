@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="club.canghao.card.dao.bookDao">
+	<select id="getAllBook_views" resultMap="book_map">
+	    select 
+			book.*,
+			review.id as reviewId,
+			review.stuNumber as reviewStuNumber,
+			review.avatarUrl as reviewAvatarUrl,
+			review.nickName  as reviewNickName,
+			review.reviewContent,
+			review.reviewTime,
+			borrow.id as borrowId,
+			borrow.stuNumber as borrowStuNumber,
+			borrow.nickName  as borrowNickName,
+			borrow.avatarUrl as borrowAvatarUrl,
+			borrow.borrowTime,
+			borrow.borrowMonths,
+			borrow.isReturn
+		from 
+			(select * from book 
+			where 1 = 1
+			<if test="key != null and key !=''">
+                AND CONCAT(bookName,bookAuthor,bookPublicTime,bookPublisher,bookCategory,bookIntro) LIKE CONCAT('%',#{key},'%')
+            </if>
+            <if test="bookId != null and bookId !=''">
+                and bookId=#{bookId}
+            </if>
+           	<if test="start!=-1 and size!=-1">
+           	     limit #{start},#{size}
+           	</if>
+			) 
+			book left join book_review review on book.bookId=review.bookId
+			left join book_borrow borrow on book.bookId=borrow.bookId
+	</select>
+	<resultMap id="book_map" type="book_view">
+         <id property="bookId" column="bookId"/>
+         <result property="bookName" column="bookName"/>
+         <result property="bookAuthor" column="bookAuthor"/>
+         <result property="bookPublicTime" column="bookPublicTime"/>
+         <result property="bookPublisher" column="bookPublisher"/>	         
+         <result property="bookCategory" column="bookCategory"/>
+         <result property="bookIntro" column="bookIntro"/>
+         <result property="bookImgUrl" column="bookImgUrl"/>
+         <result property="bookNumber" column="bookNumber"/>
+         <collection property="reviews" ofType="book_review" javaType="java.util.List">
+             <id property="id" column="reviewId"/>
+             <result property="stuNumber" column="reviewStuNumber"/>
+             <result property="nickName" column="reviewNickName"/>
+             <result property="avatarUrl" column="reviewAvatarUrl"/>
+             <result property="reviewContent" column="reviewContent"/>	         
+             <result property="reviewTime" column="reviewTime"/>
+        </collection>
+        <collection property="borrows" ofType="book_borrow" javaType="java.util.List">
+             <id property="id" column="borrowId"/>
+             <result property="stuNumber" column="borrowStuNumber"/>
+             <result property="nickName" column="borrowNickName"/>
+             <result property="avatarUrl" column="borrowAvatarUrl"/>
+             <result property="borrowTime" column="borrowTime"/>
+	         <result property="borrowMonths" column="borrowMonths"/>
+	         <result property="isReturn" column="isReturn"/>
+        </collection>
+	</resultMap>
+	<select id="getBook_borrowsByStuNumber" resultMap="book_borrowMap">
+		select 
+		books.borrowId,
+		books.borrowBookId,
+		books.stuNumber,
+		books.nickName,
+		books.avatarUrl,
+		books.borrowTime,
+		books.borrowMonths,
+		books.bookId,
+		books.bookName,
+		books.bookAuthor,
+		books.bookPublicTime,
+		books.bookPublisher,
+		books.bookCategory,
+		books.bookIntro,
+		books.bookImgUrl,
+		books.bookNumber,
+		review.id as reviewId,
+		review.bookId as reviewBookId,
+		review.stuNumber as reviewStuNumber,
+		review.nickName as reviewNickName,
+		review.avatarUrl as reviewAvatarUrl,
+		review.reviewContent,
+		review.reviewTime,   
+		borrows.id as borrowsId,
+		borrows.bookId as borrowsBookId,
+		borrows.stuNumber as borrowsStuNumber,
+		borrows.nickName as borrowsNickName,
+		borrows.avatarUrl as borrowsAvatarUrl,
+		borrows.borrowTime,
+		borrows.borrowMonths
+		from (select book_borrow.id as borrowId,
+					 book_borrow.bookId as borrowBookId,
+					 book_borrow.stuNumber,
+					 book_borrow.nickName,
+					 book_borrow.avatarUrl,
+					 book_borrow.borrowTime,
+					 book_borrow.borrowMonths,
+					 book.bookId,
+					 book.bookName,
+					 book.bookAuthor,
+					 book.bookPublicTime,
+					 book.bookPublisher,
+					 book.bookCategory,
+					 book.bookIntro,
+					 book.bookImgUrl,
+					 book.bookNumber
+			  from book_borrow,book where book_borrow.bookId = book.bookId 
+			  and book_borrow.stuNumber=#{stuNumber}
+			  and book_borrow.isReturn=#{isReturn}
+			  order by book_borrow.id asc) books left join book_review review on review.bookId=books.bookId
+			  left join book_borrow borrows  on books.bookId=borrows.bookId    
+	</select>
+	
+	<resultMap id="book_borrowMap" type="book_borrow_view">
+	     <id property="id" column="borrowId"/>
+	     <result property="bookId" column="borrowBookId"/>
+         <result property="stuNumber" column="stuNumber"/>
+         <result property="nickName" column="nickName"/>
+         <result property="avatarUrl" column="avatarUrl"/>
+         <result property="borrowTime" column="borrowTime"/>
+         <result property="borrowMonths" column="borrowMonths"/>
+         <result property="isReturn" column="isReturn"/>
+         <association property="book" javaType="book"
+		  resultMap="bookMap"/>
+         <collection property="reviews" ofType="book_review" javaType="java.util.List">
+         	 <id property="id" column="reviewId"/>
+             <result property="bookId" column="reviewBookId"/>
+             <result property="stuNumber" column="reviewStuNumber"/>
+             <result property="nickName" column="reviewNickName"/>
+             <result property="avatarUrl" column="reviewAvatarUrl"/>
+             <result property="reviewContent" column="reviewContent"/>	         
+             <result property="reviewTime" column="reviewTime"/>
+        </collection>
+        <collection property="borrows" ofType="book_borrow" javaType="java.util.List">
+        	 <id property="id" column="borrowsId"/>
+             <result property="bookId" column="borrowsBookId"/>
+             <result property="stuNumber" column="borrowsStuNumber"/>
+             <result property="nickName" column="borrowsNickName"/>
+             <result property="avatarUrl" column="borrowsAvatarUrl"/>
+             <result property="borrowTime" column="borrowTime"/>
+	         <result property="borrowMonths" column="borrowMonths"/>
+	         <result property="isReturn" column="isReturn"/>
+        </collection>
+	</resultMap>
+	<resultMap type="book" id="bookMap">
+	     <id property="bookId" column="bookId"/>
+         <result property="bookName" column="bookName"/>
+         <result property="bookAuthor" column="bookAuthor"/>
+         <result property="bookPublicTime" column="bookPublicTime"/>
+         <result property="bookPublisher" column="bookPublisher"/>	         
+         <result property="bookCategory" column="bookCategory"/>
+         <result property="bookIntro" column="bookIntro"/>
+         <result property="bookImgUrl" column="bookImgUrl"/>
+         <result property="bookNumber" column="bookNumber"/>
+	</resultMap>
+</mapper>
